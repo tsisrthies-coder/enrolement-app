@@ -23,6 +23,9 @@
     .msg{max-width:420px}.msg code{background:rgba(255,255,255,.18);padding:2px 6px;border-radius:6px;word-break:break-all}
     #offline{position:fixed;left:0;right:0;top:0;background:#c62828;color:#fff;text-align:center;padding:8px 12px calc(8px);font-weight:600;z-index:10}
     button{font:inherit;font-weight:700;border:0;border-radius:12px;padding:12px 22px;background:#fff;color:#0b7a3e}
+    #inst{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(14px + env(safe-area-inset-bottom));z-index:20;display:flex;gap:8px;align-items:center;background:#fff;color:#0b7a3e;border-radius:999px;padding:6px 6px 6px 16px;box-shadow:0 4px 18px rgba(0,0,0,.35);font-weight:700}
+    #inst button{padding:10px 16px;background:#0b7a3e;color:#fff;border-radius:999px}
+    #inst .x{background:transparent;color:#667;padding:8px 12px}
     [hidden]{display:none!important}
   </style>
 </head>
@@ -34,13 +37,14 @@
     <div class="msg"><b>Configuration à terminer</b><p>Le fichier <code>config.js</code> ne contient pas une adresse Apps Script valide.</p>
       <p>Adresse lue : <code id="seen">(aucune)</code></p>
       <p class="small">Elle doit ressembler à <code>https://script.google.com/macros/s/…/exec</code>. Vérifiez que <code>config.js</code> est bien publié sur ce site (ouvrez <code>/config.js</code> dans le navigateur).</p>
-      <p class="small">Version de la page : v2</p></div>
+      <p class="small">Version de la page : v3</p></div>
   </div>
   <div class="splash" id="fail" hidden>
     <div class="lg"></div>
     <div class="msg"><b>Connexion impossible</b><p>Vérifiez votre réseau, puis réessayez.</p></div>
     <button id="retry">Réessayer</button>
   </div>
+  <div id="inst" hidden><span>📲 Installer SEN-CSU</span><button id="instGo">Installer</button><button class="x" id="instX" aria-label="Fermer">✕</button></div>
   <iframe id="app" title="SEN-CSU" allow="camera; clipboard-write; fullscreen" hidden></iframe>
   <script src="config.js"></script>
   <script>
@@ -68,6 +72,17 @@
       }
       $('retry').onclick = start;
       start();
+
+      // Installation : le bouton n'apparaît que si le navigateur déclare l'application installable (Chrome / Edge / Samsung Internet)
+      var deferred = null, standalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+      window.addEventListener('beforeinstallprompt', function (e) { e.preventDefault(); deferred = e; if (!standalone) $('inst').hidden = false; });
+      window.addEventListener('appinstalled', function () { $('inst').hidden = true; deferred = null; });
+      $('instX').onclick = function () { $('inst').hidden = true; };
+      $('instGo').onclick = function () {
+        if (!deferred) return;
+        deferred.prompt();
+        deferred.userChoice.then(function () { deferred = null; $('inst').hidden = true; });
+      };
 
       if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(function () {});
     })();
