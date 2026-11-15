@@ -37,7 +37,7 @@
     <div class="msg"><b>Configuration à terminer</b><p>Le fichier <code>config.js</code> ne contient pas une adresse Apps Script valide.</p>
       <p>Adresse lue : <code id="seen">(aucune)</code></p>
       <p class="small">Elle doit ressembler à <code>https://script.google.com/macros/s/…/exec</code>. Vérifiez que <code>config.js</code> est bien publié sur ce site (ouvrez <code>/config.js</code> dans le navigateur).</p>
-      <p class="small">Version de la page : v3</p></div>
+      <p class="small">Version de la page : v4</p></div>
   </div>
   <div class="splash" id="fail" hidden>
     <div class="lg"></div>
@@ -68,7 +68,7 @@
         clearTimeout(timer);
         timer = setTimeout(function () { if (!loaded) { $('splash').hidden = true; $('fail').hidden = false; } }, 25000);
         frame.onload = function () { loaded = true; clearTimeout(timer); $('splash').hidden = true; $('fail').hidden = true; frame.hidden = false; };
-        loaded = false; frame.src = url;
+        loaded = false; frame.src = url + (url.indexOf('?') < 0 ? '?' : '&') + 'shell=' + encodeURIComponent(location.origin + location.pathname);
       }
       $('retry').onclick = start;
       start();
