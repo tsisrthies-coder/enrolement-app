@@ -37,7 +37,7 @@
     <div class="msg"><b>Configuration à terminer</b><p>Le fichier <code>config.js</code> ne contient pas une adresse Apps Script valide.</p>
       <p>Adresse lue : <code id="seen">(aucune)</code></p>
       <p class="small">Elle doit ressembler à <code>https://script.google.com/macros/s/…/exec</code>. Vérifiez que <code>config.js</code> est bien publié sur ce site (ouvrez <code>/config.js</code> dans le navigateur).</p>
-      <p class="small">Version de la page : v5</p></div>
+      <p class="small">Version de la page : v6</p></div>
   </div>
   <div class="splash" id="fail" hidden>
     <div class="lg"></div>
@@ -52,6 +52,7 @@
       var $ = function (id) { return document.getElementById(id); };
       var url = String(window.APP_URL || '').trim().replace(/^["']+|["']+$/g, '');
       var frame = $('app'), loaded = false, timer = null;
+      var TK = 'sencsu_tk_' + location.pathname;          // une clé par région (un même site peut héberger plusieurs régions)
 
       function updateOnline() { $('offline').hidden = navigator.onLine; }
       window.addEventListener('online', function () { updateOnline(); if (!loaded) start(); });
@@ -68,16 +69,21 @@
         clearTimeout(timer);
         timer = setTimeout(function () { if (!loaded) { $('splash').hidden = true; $('fail').hidden = false; } }, 25000);
         frame.onload = function () { loaded = true; clearTimeout(timer); $('splash').hidden = true; $('fail').hidden = true; frame.hidden = false; };
-        var tk = ''; try { tk = localStorage.getItem('sencsu_tk') || ''; } catch (e) { /* ignoré */ }
-        loaded = false; frame.src = url + (url.indexOf('?') < 0 ? '?' : '&') + 'shell=' + encodeURIComponent(location.origin + location.pathname) + (tk ? '&tk=' + encodeURIComponent(tk) : '');
+        loaded = false; frame.src = url + (url.indexOf('?') < 0 ? '?' : '&') + 'shell=' + encodeURIComponent(location.origin + location.pathname);
       }
       // La session de l'application est aussi mémorisée ici : le stockage d'une page imbriquée (iPhone, Chrome) est souvent vidé
       window.addEventListener('message', function (e) {
         if (!/^https:\/\/([a-z0-9-]+\.)*(googleusercontent\.com|google\.com)$/.test(e.origin)) return;
         var m = e.data;
-        if (!m || m.sencsu !== 'tok') return;
+        if (!m || (m.sencsu !== 'tok' && m.sencsu !== 'get')) return;
+        if (m.sencsu === 'get') {                         // l'application demande la session mémorisée : réponse à cette fenêtre seulement
+          var saved = '';
+          try { saved = localStorage.getItem(TK) || ''; } catch (x) { /* ignoré */ }
+          try { if (e.source) e.source.postMessage({ sencsu: 'tok-reply', tok: saved }, e.origin); } catch (x) { /* ignoré */ }
+          return;
+        }
         try {
-          if (m.tok && /^[A-Za-z0-9_.\-]{20,600}$/.test(m.tok)) localStorage.setItem('sencsu_tk', m.tok); else localStorage.removeItem('sencsu_tk');
+          if (m.tok && /^[A-Za-z0-9_.\-]{20,600}$/.test(m.tok)) localStorage.setItem(TK, m.tok); else localStorage.removeItem(TK);
         } catch (x) { /* ignoré */ }
       });
       $('retry').onclick = start;
