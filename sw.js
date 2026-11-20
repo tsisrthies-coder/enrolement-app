@@ -1,6 +1,6 @@
 /* Service worker : met la « coquille » de l'application en cache (ouverture instantanée).
    Les données et l'application Apps Script passent toujours par le réseau. */
-var CACHE = 'sencsu-shell-v5';
+var CACHE = 'sencsu-shell-v6';
 var SHELL = ['./', 'index.html', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/icon-180.png'];
 
 self.addEventListener('install', function (e) {
